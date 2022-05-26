@@ -15,7 +15,7 @@ const CollectionConfig: CollectionConfigInterface = {
   hiddenMetadataUri: 'ipfs://QmcmJ1g8kNsiRRKUznLkjcigFk4sw7YZMy8dQ7W9axNNGN/hidden.json',
   maxSupply: 10,
   whitelistSale: {
-    price: 0.05,
+    price: 0.001,
     maxMintAmountPerTx: 2,
   },
   preSale: {

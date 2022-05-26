@@ -12,7 +12,7 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
   using Strings for uint256;
 
   bytes32 public merkleRoot;
-  mapping(address => bool) public whitelistClaimed;
+ // mapping(address => bool) public whitelistClaimed;
 
   string public uriPrefix = '';
   string public uriSuffix = '.json';
@@ -21,10 +21,13 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
   uint256 public cost;
   uint256 public maxSupply;
   uint256 public maxMintAmountPerTx;
+  uint256 public NftPerWhitelistLimit = 2; //New
 
-  bool public paused = true;
-  bool public whitelistMintEnabled = false;
+  bool public paused = false;
+  bool public whitelistMintEnabled = true;
   bool public revealed = false;
+
+  address[] public WhitelistAddresses; //New
 
   constructor(
     string memory _tokenName,
@@ -54,14 +57,34 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
   function whitelistMint(uint256 _mintAmount, bytes32[] calldata _merkleProof) public payable mintCompliance(_mintAmount) mintPriceCompliance(_mintAmount) {
     // Verify whitelist requirements
     require(whitelistMintEnabled, 'The whitelist sale is not enabled!');
-    require(!whitelistClaimed[_msgSender()], 'Address already claimed!');
+    uint256 supply = totalSupply();
+    //require(!whitelistClaimed[_msgSender()], 'Address already claimed!');
     bytes32 leaf = keccak256(abi.encodePacked(_msgSender()));
     require(MerkleProof.verify(_merkleProof, merkleRoot, leaf), 'Invalid proof!');
 
-    whitelistClaimed[_msgSender()] = true;
-    _safeMint(_msgSender(), _mintAmount);
-  }
+        if (msg.sender != owner()) {
+          if(whitelistMintEnabled== true){
+            require(isWhitelisted(msg.sender), "user is not whitelisted");
+            uint256 ownerTokenCount = balanceOf(msg.sender);
+            require(ownerTokenCount < NftPerWhitelistLimit);
+          }
+          require(msg.value >= cost * _mintAmount);
+    }
 
+    for (uint256 i = 1; i <= _mintAmount; i++) {
+      _safeMint(msg.sender, supply + i);
+    }
+   // whitelistClaimed[_msgSender()] = true;
+   // _safeMint(_msgSender(), _mintAmount);
+  }
+ function isWhitelisted(address _user) public view returns (bool){
+     for(uint256 i = 0; i< WhitelistAddresses.length; i++){
+         if(WhitelistAddresses[i] == _user){
+             return true;
+         }
+     }
+     return false;
+ }
   function mint(uint256 _mintAmount) public payable mintCompliance(_mintAmount) mintPriceCompliance(_mintAmount) {
     require(!paused, 'The contract is paused!');
 
@@ -128,6 +151,9 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
   function setMaxMintAmountPerTx(uint256 _maxMintAmountPerTx) public onlyOwner {
     maxMintAmountPerTx = _maxMintAmountPerTx;
   }
+    function setNftPerAddressLimit(uint256 _limit) public onlyOwner {
+    NftPerWhitelistLimit = _limit;
+  }
 
   function setHiddenMetadataUri(string memory _hiddenMetadataUri) public onlyOwner {
     hiddenMetadataUri = _hiddenMetadataUri;
@@ -152,7 +178,10 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
   function setWhitelistMintEnabled(bool _state) public onlyOwner {
     whitelistMintEnabled = _state;
   }
-
+ function whitelistUsers(address[] calldata _users) public onlyOwner {
+     delete WhitelistAddresses;
+     WhitelistAddresses = _users;
+  }
   function withdraw() public onlyOwner nonReentrant {
     // This will pay HashLips Lab Team 5% of the initial sale.
     // By leaving the following lines as they are you will contribute to the
