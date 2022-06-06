@@ -27,6 +27,7 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
     bool public revealed = false;
 
     address[] public WhitelistAddresses; //New
+  
 
     constructor(
         string memory _tokenName,
