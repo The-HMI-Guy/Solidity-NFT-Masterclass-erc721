@@ -71,7 +71,7 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
         require(whitelistMintEnabled, "The whitelist sale is not enabled!");
         uint256 supply = totalSupply();
         require(
-            whitelistClaimed[msg.sender] < 2,
+            (whitelistClaimed[msg.sender] + _mintAmount) < 2,
             "You already claimed 2 NFTs!"
         ); //Added with Firebug509
         bytes32 leaf = keccak256(abi.encodePacked(_msgSender()));
