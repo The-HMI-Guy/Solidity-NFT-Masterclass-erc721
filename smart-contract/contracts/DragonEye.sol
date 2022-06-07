@@ -10,8 +10,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
     using Strings for uint256;
 
-    bytes32 public merkleRoot;
-    mapping(address => uint256) public whitelistClaimed; //Added with Firebug509
+    //bytes32 public merkleRoot;
+    mapping(address => uint256) public whitelistClaimed;
 
     string public uriPrefix = "";
     string public uriSuffix = ".json";
@@ -20,15 +20,16 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
     uint256 public cost;
     uint256 public maxSupply;
     uint256 public maxMintAmountPerTx;
-    uint256 public NftPerWhitelistLimit = 2; //New
+    uint256 public NftPerWhitelistLimit = 2;
 
     bool public paused = false;
     bool public whitelistMintEnabled = true;
     bool public revealed = false;
 
+    //Manually adding my WL address
     address[] public WhitelistAddresses = [
         0x53aE57a6cf0C9Bcb53a8932C97cDaD0a57Ef391d
-    ]; //New
+    ];
 
     constructor(
         string memory _tokenName,
@@ -61,39 +62,26 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
         _;
     }
 
-    function whitelistMint(uint256 _mintAmount, bytes32[] calldata _merkleProof)
+    function whitelistMint(uint256 _mintAmount)
         public
         payable
         mintCompliance(_mintAmount)
         mintPriceCompliance(_mintAmount)
     {
-        // Verify whitelist requirements
         require(whitelistMintEnabled, "The whitelist sale is not enabled!");
         uint256 supply = totalSupply();
         require(
             (whitelistClaimed[msg.sender] + _mintAmount) <= 2,
             "You already claimed 2 NFTs!"
-        ); //Added with Firebug509
-        bytes32 leaf = keccak256(abi.encodePacked(_msgSender()));
-        require(
-            MerkleProof.verify(_merkleProof, merkleRoot, leaf),
-            "Invalid proof!"
         );
-
-       // if (msg.sender != owner()) {
-         //   if (whitelistMintEnabled == true) {
-                require(isWhitelisted(msg.sender), "user is not whitelisted");
-                uint256 ownerTokenCount = balanceOf(msg.sender);
-                require(ownerTokenCount < NftPerWhitelistLimit);
-            //}
-           // require(msg.value >= cost * _mintAmount);
-       // }
+        require(isWhitelisted(msg.sender), "user is not whitelisted");
+        uint256 ownerTokenCount = balanceOf(msg.sender);
+        require(ownerTokenCount < NftPerWhitelistLimit);
 
         for (uint256 i = 1; i <= _mintAmount; i++) {
             _safeMint(msg.sender, supply + i);
         }
-        whitelistClaimed[msg.sender] += _mintAmount; //Added with Firebug509
-        // _safeMint(_msgSender(), _mintAmount);
+        whitelistClaimed[msg.sender] += _mintAmount;
     }
 
     function isWhitelisted(address _user) public view returns (bool) {
@@ -227,10 +215,6 @@ contract DragonEye is ERC721A, Ownable, ReentrancyGuard {
 
     function setPaused(bool _state) public onlyOwner {
         paused = _state;
-    }
-
-    function setMerkleRoot(bytes32 _merkleRoot) public onlyOwner {
-        merkleRoot = _merkleRoot;
     }
 
     function setWhitelistMintEnabled(bool _state) public onlyOwner {
