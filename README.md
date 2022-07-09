@@ -5,4 +5,4 @@ integrated DAPP within a simple yet powerful workspace.
 
 ## Summary
 
-This project was created following Hashlip's tutorial videos. However, this project has been altered to meet Firbug509's requirements for his task.
+This project was created following Hashlip's tutorial videos. However, this project has been altered to meet Firebug509's requirements for his task.
